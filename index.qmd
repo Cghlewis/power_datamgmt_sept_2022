@@ -1,5 +1,6 @@
 ---
 title: "POWER: Issues in Data Management in Education Research Hub"
+date: "09-07-2022 (updated: `r format(Sys.time(), '%m/%d/%Y')`)"
 format:
   revealjs: 
     theme: moon
@@ -102,11 +103,10 @@ But as you can see here, our members take on many different roles. Many of us ta
   select(name, learn = learn_new) %>%
   summarise(count = n()) %>%
   arrange(desc(count)) %>%
-  kableExtra::kbl() %>%
-  kableExtra::kable_styling()
-
+  gt::gt()
 
 ```
+
 
 # Topics of interest {.smaller}
 
