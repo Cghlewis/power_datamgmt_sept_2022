@@ -1,0 +1,175 @@
+---
+title: "POWER: Issues in Data Management in Education Research Hub"
+format:
+  revealjs: 
+    theme: moon
+---
+
+# About the group! (n=19)
+
+```{r}
+
+#|include: false
+
+library(tidyverse)
+library(stringr)
+
+```
+
+```{r}
+
+#|label: read-data
+#|include: false
+#|echo: false
+
+#data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/19PNxitF6glqZ4uGrJY-UI5NCPrYr3nO_Cvo8CDkNlxE/edit?usp=sharing")
+
+#saveRDS(data,"google_data.rds")
+
+data <- readRDS("google_data.rds")
+
+# Filter out test data and set variable names
+
+survey <- data %>% 
+  dplyr::filter(`What is your name?` != "Test") %>%
+  select(-c(Timestamp, `What is your preferred email?`:`Are you interested in joining this hub?`, `Is there anyone you think would be interested in joining this group? If yes, please provide their name and email. If I haven't already invited them, I will add them to the list.`)) %>%
+  set_names("name", "interest", "role", "learn", "topics",
+            "presenting", "present_topic", "resources",
+            "meet")
+
+```
+
+
+```{r}
+
+#|label: role
+#|echo: false
+#|fig.align: center
+
+survey %>%
+  select(name, role) %>%
+  separate_rows(role, sep = ",") %>%
+  mutate(role = str_trim(role, side = "both")) %>%
+  filter(!(str_detect(role, "project coordinator|Assistant|access"))) %>%
+    mutate(role = case_when(
+      role == "Principal Investigator/Co-PI" ~ "PI/Co-PI",
+      str_detect(role, "New") ~ "Data Manager",
+      str_detect(role, "Postdoc|post-doc") ~ "Postdoc",
+      TRUE ~ role
+  )) %>%
+  group_by(role) %>%
+  summarize(count = n()) %>%
+  ggplot(aes (x = reorder(role, count), y = count)) +
+  geom_bar(stat = "identity", color = "#002b36", 
+           fill = "#fc8458") +
+  labs(x = "Role \n ", y = "\n Count") +
+  coord_flip() +
+  scale_y_continuous(breaks= 0:8) +
+  ggthemes::theme_tufte(base_size = 17)
+
+
+
+```
+
+::: {.notes}
+Our group has grown since we started at the beginning of this year. We now have 19 total members. If anyone knows of others who may want to join, please let me know.
+But as you can see here, our members take on many different roles. Many of us take on more than one role within our teams.
+:::
+
+# How did you learn data management? {.smaller}
+
+```{r, echo = FALSE}
+
+#| label: learn
+
+ survey %>%
+  select(name, learn) %>%
+  filter(learn != "NA") %>%
+  separate_rows(learn, sep = ",") %>%
+  mutate(learn = str_trim(learn, side = "left")) %>%
+  filter(learn != "etc)") %>%
+  mutate(learn_new = case_when(
+                           str_detect(learn, "Self-taught") ~ "Self-taught",
+                           str_detect(learn, "Colleagues") ~ "Colleagues",
+                           str_detect(learn, "online|Online|workshops") ~ "Workshops and Online courses",
+                           str_detect(learn, "Made") ~ "Made it up",
+                           str_detect(learn, "post") ~ "Post-doc",
+                           str_detect(learn, "never learned") ~ "Never learned",
+                           str_detect(learn, "podc") ~ "Podcasts",
+                           TRUE ~ learn
+                           )) %>%
+  group_by(learn_new) %>%
+  select(name, learn = learn_new) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  kableExtra::kbl() %>%
+  kableExtra::kable_styling()
+
+
+```
+
+# Topics of interest {.smaller}
+
+```{r}
+
+#|label: topics
+#|echo:false
+
+survey %>%
+  select(name, topics) %>%
+  separate_rows(topics, sep = ",") %>%
+  separate_rows(topics, sep = ";") %>%
+  mutate(topics = str_trim(topics, side = "both")) %>%
+  filter(!topics %in% c("organizations", "opportunities for advancement", 
+                        "etc.)")) %>%
+  mutate(topics = case_when(
+    str_detect(topics, "Hack") ~ "Hackathon/Sharing",
+    str_detect(topics, "hiring") ~ "Writing DM job description",
+    str_detect(topics, "Careers") ~ "Careers in DM",
+    str_detect(topics, "Organizing your") ~ "Creating best practice guide",
+    str_detect(topics, "harmonization") ~ "Data merging/harmonizing",
+    str_detect(topics, "storage") ~ "Data storage/versioning",
+    str_detect(topics, "merging") ~ "Data merging/harmonizing",
+    str_detect(topics, "Developing") ~ "DM plans",
+    TRUE ~ topics
+  )) %>%
+  group_by(topics) %>%
+  summarize(count = n()) %>%
+  ggplot(aes (x = reorder(topics, count), y = count)) +
+  geom_bar(stat = "identity", color = "#002b36", 
+           fill = "#fc8458") +
+  labs(x = "Topic \n ", y = "\n Count") +
+  coord_flip() +
+  ggthemes::theme_tufte(base_size = 13) +
+  scale_y_continuous(breaks= 0:15) 
+
+
+```
+
+# About this group {background-image="img/idea.jpg"}
+
+::: footer
+Photo by <a href="https://unsplash.com/@kellysikkema?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kelly Sikkema</a> on <a href="https://unsplash.com/s/photos/idea?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+:::
+
+::: {.notes}
+I think I formed this hub as sort of a support group. I know many times data managers in particular are working alone and so it can be difficult to know if the practices you are implementing are actually the best way to do things because you have no one to bounce ideas off of. And so my hope was that this group could be a place where we could share ideas with each other, ask questions and learn from each other to improve our work
+And maybe even at some point, this group can disseminate information to others
+:::
+
+
+# Data Management Life Cycle
+
+![](img\flow.PNG){fig-align="center"}
+
+::: {.notes}
+This is a workflow chart that I have been working on because I really have a dislike for all of the other research data life cycle charts I have come across. But I put this up here to say data management is broad and vast. And I think oftentimes when I say data management to people, their minds immediately go to code writing and data cleaning. How do you physically manage your data. But, as I think we are all aware of, data management permeates every part of the research life cycle, and so this group is open to discuss any point along this life cycle. Wherever you see pain points we can talk about it.
+:::
+
+# Upcoming Events
+
+1. Monthly meetups (First Monday of every month from 11am-12pm CST)
+2. Bimonthly presentations from group members
+    + First presentation this fall on `Thursday Sept. 29th: Data Collection Structures with Rebekah Jacob`
+3. Ongoing resource list can be found [here](https://docs.google.com/document/d/1Jx90Z1MA1bm9Ofgy04Kgl43DagL7_PJTSnmhBHNqtxA/edit?usp=sharing)
+4. Interest in developing a data management symposium open to the entire POWER group
